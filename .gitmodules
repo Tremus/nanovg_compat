@@ -1,0 +1,6 @@
+[submodule "modules/nanovg_dx11"]
+	path = modules/nanovg_dx11
+	url = https://github.com/tremus/nanovg_dx11
+[submodule "modules/MetalNanoVG"]
+	path = modules/MetalNanoVG
+	url = https://github.com/ollix/MetalNanoVG

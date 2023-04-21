@@ -9,6 +9,7 @@ extern "C" {
 
 #ifdef _WIN32
 #define D3D11_NO_HELPERS
+#define NOMINMAX
 #include <nanovg_d3d11.h>
 
 struct D3DNVGframebuffer

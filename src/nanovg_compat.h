@@ -110,6 +110,11 @@ NVGcolor nvgGetFillColor(NVGcontext* ctx);
 
 void nvgCurrentScissor(NVGcontext* ctx, float* x, float* y, float* w, float* h);
 
+// Fills the current path with current stroke style.
+// Set fringeWidth to value > 1 to control blur amount.
+// https://github.com/memononen/nanovg/issues/460
+void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth);
+
 #ifdef __cplusplus
 }
 #endif

@@ -59,6 +59,52 @@ void nvgCurrentScissor(NVGcontext* ctx, float* x, float* y, float* w, float* h)
     *h = tey * 2;
 }
 
+void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth)
+{
+    NVGstate* state = nvg__getState(ctx);
+    float scale = nvg__getAverageScale(state->xform);
+    float strokeWidth = nvg__clampf(state->strokeWidth * scale, 0.0f, 200.0f);
+    NVGpaint strokePaint = state->stroke;
+    const NVGpath* path;
+    int i;
+
+    if (strokeWidth < fringeWidth)
+    {
+        // If the stroke width is less than pixel size, use alpha to emulate
+        // coverage. Since coverage is area, scale by alpha*alpha.
+        float alpha = nvg__clampf(strokeWidth / fringeWidth, 0.0f, 1.0f);
+        strokePaint.innerColor.a *= alpha * alpha;
+        strokePaint.outerColor.a *= alpha * alpha;
+        strokeWidth = fringeWidth;
+    }
+
+    // Apply global alpha
+    strokePaint.innerColor.a *= state->alpha;
+    strokePaint.outerColor.a *= state->alpha;
+
+    nvg__flattenPaths(ctx);
+
+    if (ctx->params.edgeAntiAlias && state->shapeAntiAlias)
+        nvg__expandStroke(ctx, strokeWidth * 0.5f, fringeWidth, state->lineCap,
+                          state->lineJoin, state->miterLimit);
+    else
+        nvg__expandStroke(ctx, strokeWidth * 0.5f, 0.0f, state->lineCap,
+                          state->lineJoin, state->miterLimit);
+
+    ctx->params.renderStroke(ctx->params.userPtr, &strokePaint,
+                             state->compositeOperation, &state->scissor,
+                             fringeWidth, strokeWidth, ctx->cache->paths,
+                             ctx->cache->npaths);
+
+    // Count triangles
+    for (i = 0; i < ctx->cache->npaths; i++)
+    {
+        path = &ctx->cache->paths[i];
+        ctx->strokeTriCount += path->nstroke - 2;
+        ctx->drawCallCount++;
+    }
+}
+
 #ifdef NANOVG_D3D11_IMPLEMENTATION
 
 #define WCODE_HRESULT_FIRST MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x200)

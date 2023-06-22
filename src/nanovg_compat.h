@@ -27,15 +27,15 @@ extern "C" {
 struct D3DNVGframebuffer
 {
     int image; // nvg image id
-    ID3D11RenderTargetView* pRenderTargetView;
+    struct ID3D11RenderTargetView* pRenderTargetView;
     float width;
     float height;
 };
 typedef struct D3DNVGframebuffer D3DNVGframebuffer;
 
-NVGcontext* d3dnvgCreateContext(HWND hwnd, int flags, unsigned int width,
+NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width,
                                 unsigned int height);
-HRESULT d3dnvgSetViewBounds(HWND hwnd, unsigned int width, unsigned int height);
+long d3dnvgSetViewBounds(void* hwnd, unsigned int width, unsigned int height);
 void d3dnvgDeleteContext(NVGcontext* ctx);
 void d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color);
 
@@ -50,7 +50,7 @@ void d3dnvgDeleteFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb);
 void d3dPresent(void);
 
 #define nvgCreateContext(layer, flags, w, h)                                   \
-    d3dnvgCreateContext((HWND)layer,                                           \
+    d3dnvgCreateContext(layer,                                                 \
                         flags | NVG_ANTIALIAS | NVG_STENCIL_STROKES,           \
                         (unsigned)w, (unsigned)h)
 #define nvgDeleteContext(context) d3dnvgDeleteContext(context)
@@ -60,7 +60,7 @@ void d3dPresent(void);
 #define nvgDeleteFramebuffer(ctx, fb) d3dnvgDeleteFramebuffer(ctx, fb)
 #define nvgClearWithColor(ctx, color) d3dnvgClearWithColor(ctx, color)
 #define nvgSetViewBounds(layer, w, h)                                          \
-    d3dnvgSetViewBounds((HWND)layer, (unsigned)w, (unsigned)h)
+    d3dnvgSetViewBounds(layer, (unsigned)w, (unsigned)h)
 typedef D3DNVGframebuffer NVGframebuffer;
 
 #elif defined __APPLE__

@@ -16,12 +16,12 @@ extern "C" {
 NanoVGDrawCallCount nvgGetDrawCallCount(NVGcontext* ctx)
 {
     NanoVGDrawCallCount callCount;
-    callCount.draws = ctx->drawCallCount;
-    callCount.fill = ctx->fillTriCount;
+    callCount.draws  = ctx->drawCallCount;
+    callCount.fill   = ctx->fillTriCount;
     callCount.stroke = ctx->strokeTriCount;
-    callCount.text = ctx->textTriCount;
-    callCount.total = ctx->drawCallCount + ctx->fillTriCount +
-                      ctx->strokeTriCount + ctx->textTriCount;
+    callCount.text   = ctx->textTriCount;
+    callCount.total  = ctx->drawCallCount  + ctx->fillTriCount +
+                       ctx->strokeTriCount + ctx->textTriCount;
     return callCount;
 }
 
@@ -292,7 +292,7 @@ static HRESULT D3D__initializeDX11(HWND hwnd, unsigned int width,
     return hr;
 }
 
-NVGcontext* d3dnvgCreateContext(HWND hwnd, int flags, unsigned int width,
+NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width,
                                 unsigned int height)
 {
     NVGcontext* ctx = NULL;
@@ -319,7 +319,7 @@ void d3dnvgDeleteContext(NVGcontext* ctx)
     nvgDeleteD3D11(ctx);
 }
 
-HRESULT d3dnvgSetViewBounds(HWND hwnd, unsigned int width, unsigned int height)
+long d3dnvgSetViewBounds(void* hwnd, unsigned int width, unsigned int height)
 {
     D3D11_RENDER_TARGET_VIEW_DESC renderDesc;
     ID3D11RenderTargetView* viewList[1] = {NULL};

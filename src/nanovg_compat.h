@@ -76,7 +76,7 @@ void mnvgSetViewBounds(void* view, int width, int height);
 #define nvgCreateContext(layer, flags, w, h)                                   \
     mnvgCreateContext(layer, flags | NVG_ANTIALIAS | NVG_TRIPLE_BUFFER, w, h)
 #define nvgDeleteContext(context) nvgDeleteMTL(context)
-#define nvgBindFramebuffer(ctx, fb) mnvgBindFramebuffer(fb)
+#define nvgBindFramebuffer(ctx, fb) mnvgBindFramebuffer(ctx, fb)
 #define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
     mnvgCreateFramebuffer(ctx, w, h, flags)
 #define nvgDeleteFramebuffer(ctx, fb) mnvgDeleteFramebuffer(fb)

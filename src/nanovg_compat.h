@@ -33,34 +33,38 @@ struct D3DNVGframebuffer
 };
 typedef struct D3DNVGframebuffer D3DNVGframebuffer;
 
+struct D3DNVGdevice;
+
+struct D3DNVGdevice* d3dnvgGetDevice(NVGcontext*);
+
 NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width,
                                 unsigned int height);
-long d3dnvgSetViewBounds(void* hwnd, unsigned int width, unsigned int height);
+long d3dnvgSetViewBounds(struct D3DNVGdevice*, void* hwnd, unsigned int width, unsigned int height);
 void d3dnvgDeleteContext(NVGcontext* ctx);
 void d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color);
 
 // Binds the output-merger render target
-void d3dnvgBindFramebuffer(D3DNVGframebuffer* fb);
+void d3dnvgBindFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb);
 // Creates a 2D texture to use as a render target
 D3DNVGframebuffer* d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
                                            int flags);
 // Deletes the frame buffer
 void d3dnvgDeleteFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb);
 
-void d3dPresent(void);
+void d3dnvgPresent(NVGcontext* ctx);
 
 #define nvgCreateContext(layer, flags, w, h)                                   \
     d3dnvgCreateContext(layer,                                                 \
                         flags | NVG_ANTIALIAS | NVG_STENCIL_STROKES,           \
                         (unsigned)w, (unsigned)h)
 #define nvgDeleteContext(context) d3dnvgDeleteContext(context)
-#define nvgBindFramebuffer(fb) d3dnvgBindFramebuffer(fb)
+#define nvgBindFramebuffer(ctx, fb) d3dnvgBindFramebuffer(ctx, fb)
 #define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
     d3dnvgCreateFramebuffer(ctx, w, h, flags)
 #define nvgDeleteFramebuffer(ctx, fb) d3dnvgDeleteFramebuffer(ctx, fb)
 #define nvgClearWithColor(ctx, color) d3dnvgClearWithColor(ctx, color)
-#define nvgSetViewBounds(layer, w, h)                                          \
-    d3dnvgSetViewBounds(layer, (unsigned)w, (unsigned)h)
+#define nvgSetViewBounds(ctx, layer, w, h)                                          \
+    d3dnvgSetViewBounds(d3dnvgGetDevice(ctx), layer, (unsigned)w, (unsigned)h)
 typedef D3DNVGframebuffer NVGframebuffer;
 
 #elif defined __APPLE__
@@ -72,12 +76,12 @@ void mnvgSetViewBounds(void* view, int width, int height);
 #define nvgCreateContext(layer, flags, w, h)                                   \
     mnvgCreateContext(layer, flags | NVG_ANTIALIAS | NVG_TRIPLE_BUFFER, w, h)
 #define nvgDeleteContext(context) nvgDeleteMTL(context)
-#define nvgBindFramebuffer(fb) mnvgBindFramebuffer(fb)
+#define nvgBindFramebuffer(ctx, fb) mnvgBindFramebuffer(fb)
 #define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
     mnvgCreateFramebuffer(ctx, w, h, flags)
 #define nvgDeleteFramebuffer(ctx, fb) mnvgDeleteFramebuffer(fb)
 #define nvgClearWithColor(ctx, color) mnvgClearWithColor(ctx, color)
-#define nvgSetViewBounds(nsview, w, h) mnvgSetViewBounds(nsview, w, h)
+#define nvgSetViewBounds(ctx, nsview, w, h) mnvgSetViewBounds(nsview, w, h)
 typedef MNVGframebuffer NVGframebuffer;
 
 #elif defined __linux__
@@ -86,7 +90,7 @@ typedef MNVGframebuffer NVGframebuffer;
 
 #define nvgCreateContext(flags) nvgCreateGLES2(flags)
 #define nvgDeleteContext(context) nvgDeleteGLES2(context)
-#define nvgBindFramebuffer(fb) nvgluBindFramebuffer(fb)
+#define nvgBindFramebuffer(ctx, fb) nvgluBindFramebuffer(fb)
 #define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
     nvgluCreateFramebuffer(ctx, w, h, flags)
 #define nvgDeleteFramebuffer(ctx, fb) nvgluDeleteFramebuffer(fb)

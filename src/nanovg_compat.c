@@ -157,7 +157,7 @@ static void d3dnvgDestroyDevice(struct D3DNVGdevice* device)
     D3D_API_RELEASE(device->pDepthStencil);
     D3D_API_RELEASE(device->pDepthStencilView);
     
-    free(device);
+    NVG_FREE(device);
 }
 
 // Setup the device and the rendering targets
@@ -172,7 +172,7 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
     UINT deviceFlags = 0;
     UINT driver = 0;
 
-    device = (struct D3DNVGdevice*)malloc(sizeof(*device));
+    device = (struct D3DNVGdevice*)NVG_MALLOC(sizeof(*device));
 
     if (device == NULL)
     {
@@ -494,7 +494,7 @@ D3DNVGframebuffer* d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
     struct D3DNVGdevice* device = (struct D3DNVGdevice*)D3D->userPtr;
 
     D3DNVGframebuffer* fb =
-        (D3DNVGframebuffer*)malloc(sizeof(D3DNVGframebuffer));
+        (D3DNVGframebuffer*)NVG_MALLOC(sizeof(D3DNVGframebuffer));
 
     if (fb == NULL)
     {
@@ -538,11 +538,10 @@ void d3dnvgDeleteFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb)
     if (fb == NULL)
         return;
     if (fb->image > 0)
-    {
         nvgDeleteImage(ctx, fb->image);
-    }
+
     D3D_API_RELEASE(fb->pRenderTargetView);
-    free(fb);
+    NVG_FREE(fb);
 }
 
 #ifdef __cplusplus

@@ -457,7 +457,7 @@ void d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color)
               color.rgba);
 }
 
-void d3dnvgBindFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb)
+void d3dnvgBindFramebuffer(NVGcontext* ctx, int texId)
 {
     struct D3DNVGdevice* device = d3dnvgGetDevice(ctx);
 
@@ -468,7 +468,7 @@ void d3dnvgBindFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb)
     viewport.MinDepth = 0.0f;
     viewport.MaxDepth = 1.0f;
 
-    if (fb == NULL)
+    if (texId == 0)
     {
         viewport.Width = device->swapDesc.BufferDesc.Width;
         viewport.Height = device->swapDesc.BufferDesc.Height;
@@ -478,10 +478,10 @@ void d3dnvgBindFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb)
     {
         NVGparams* params = nvgInternalParams(ctx);
         struct D3DNVGcontext* D3D = (struct D3DNVGcontext*)params->userPtr;
-        struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, fb->image);
+        struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, texId);
         viewport.Width = tex->width;
         viewport.Height = tex->height;
-        device->pTargetView = fb->pRenderTargetView;
+        device->pTargetView = tex->renderTargetView;
     }
 
     D3D_API_3(device->pDeviceContext, OMSetRenderTargets, 1, &device->pTargetView,
@@ -489,27 +489,17 @@ void d3dnvgBindFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb)
     D3D_API_2(device->pDeviceContext, RSSetViewports, 1, &viewport);
 }
 
-D3DNVGframebuffer* d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
+int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
                                            int flags)
 {
     NVGparams* params = nvgInternalParams(ctx);
     struct D3DNVGcontext* D3D = (struct D3DNVGcontext*)params->userPtr;
     struct D3DNVGdevice* device = (struct D3DNVGdevice*)D3D->userPtr;
 
-    D3DNVGframebuffer* fb =
-        (D3DNVGframebuffer*)NVG_MALLOC(sizeof(D3DNVGframebuffer));
-
-    if (fb == NULL)
-    {
-        OutputDebugString("Failed to allocate a framebuffer");
-        return NULL;
-    }
-
-    ZeroMemory(fb, sizeof(*fb));
-    fb->image =
+    int texId =
         nvgCreateImageRGBA(ctx, w, h, flags | NVG_IMAGE_RENDER_TARGET, NULL);
 
-    struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, fb->image);
+    struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, texId);
 
     D3D11_RENDER_TARGET_VIEW_DESC renderDesc;
     ZeroMemory(&renderDesc, sizeof(renderDesc));
@@ -522,27 +512,16 @@ D3DNVGframebuffer* d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
     renderDesc.Texture2D.MipSlice = 0;
 
     HRESULT hr = device->pDevice->lpVtbl->CreateRenderTargetView(device->pDevice,
-        (struct ID3D11Resource*)tex->tex, &renderDesc, &fb->pRenderTargetView);
+        (struct ID3D11Resource*)tex->tex, &renderDesc, &tex->renderTargetView);
     if (FAILED(hr))
     {
         WORD code = HRESULTToWCode(hr);
         OutputDebugString("Failed creating frame buffer "
                           "ID3D11Device::CreateRenderTargetView()");
-        return NULL;
+        return 0;
     }
 
-    return fb;
-}
-
-void d3dnvgDeleteFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb)
-{
-    if (fb == NULL)
-        return;
-    if (fb->image > 0)
-        nvgDeleteImage(ctx, fb->image);
-
-    D3D_API_RELEASE(fb->pRenderTargetView);
-    NVG_FREE(fb);
+    return texId;
 }
 
 #ifdef __cplusplus

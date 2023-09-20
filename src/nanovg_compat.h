@@ -24,13 +24,6 @@ extern "C" {
 #define NOMINMAX
 #include <nanovg_d3d11.h>
 
-struct D3DNVGframebuffer
-{
-    int image; // nvg image id
-    struct ID3D11RenderTargetView* pRenderTargetView;
-};
-typedef struct D3DNVGframebuffer D3DNVGframebuffer;
-
 struct D3DNVGdevice;
 
 struct D3DNVGdevice* d3dnvgGetDevice(NVGcontext*);
@@ -42,12 +35,9 @@ void d3dnvgDeleteContext(NVGcontext* ctx);
 void d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color);
 
 // Binds the output-merger render target
-void d3dnvgBindFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb);
+void d3dnvgBindFramebuffer(NVGcontext* ctx, int image);
 // Creates a 2D texture to use as a render target
-D3DNVGframebuffer* d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
-                                           int flags);
-// Deletes the frame buffer
-void d3dnvgDeleteFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb);
+int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h, int flags);
 
 void d3dnvgPresent(NVGcontext* ctx);
 
@@ -56,14 +46,13 @@ void d3dnvgPresent(NVGcontext* ctx);
                         flags | NVG_ANTIALIAS | NVG_STENCIL_STROKES,           \
                         (unsigned)w, (unsigned)h)
 #define nvgDeleteContext(context) d3dnvgDeleteContext(context)
-#define nvgBindFramebuffer(ctx, fb) d3dnvgBindFramebuffer(ctx, fb)
+#define nvgBindFramebuffer(ctx, texId) d3dnvgBindFramebuffer(ctx, texId)
 #define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
     d3dnvgCreateFramebuffer(ctx, w, h, flags)
-#define nvgDeleteFramebuffer(ctx, fb) d3dnvgDeleteFramebuffer(ctx, fb)
+#define nvgDeleteFramebuffer(ctx, texId) nvgDeleteImage(ctx, texId)
 #define nvgClearWithColor(ctx, color) d3dnvgClearWithColor(ctx, color)
-#define nvgSetViewBounds(ctx, layer, w, h)                                          \
+#define nvgSetViewBounds(ctx, layer, w, h)                                     \
     d3dnvgSetViewBounds(d3dnvgGetDevice(ctx), layer, (unsigned)w, (unsigned)h)
-typedef D3DNVGframebuffer NVGframebuffer;
 
 #elif defined __APPLE__
 #include <nanovg_mtl.h>

@@ -28,8 +28,6 @@ struct D3DNVGframebuffer
 {
     int image; // nvg image id
     struct ID3D11RenderTargetView* pRenderTargetView;
-    float width;
-    float height;
 };
 typedef struct D3DNVGframebuffer D3DNVGframebuffer;
 

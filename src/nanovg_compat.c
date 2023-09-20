@@ -476,8 +476,11 @@ void d3dnvgBindFramebuffer(NVGcontext* ctx, D3DNVGframebuffer* fb)
     }
     else
     {
-        viewport.Width = fb->width;
-        viewport.Height = fb->height;
+        NVGparams* params = nvgInternalParams(ctx);
+        struct D3DNVGcontext* D3D = (struct D3DNVGcontext*)params->userPtr;
+        struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, fb->image);
+        viewport.Width = tex->width;
+        viewport.Height = tex->height;
         device->pTargetView = fb->pRenderTargetView;
     }
 
@@ -505,8 +508,6 @@ D3DNVGframebuffer* d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
     ZeroMemory(fb, sizeof(*fb));
     fb->image =
         nvgCreateImageRGBA(ctx, w, h, flags | NVG_IMAGE_RENDER_TARGET, NULL);
-    fb->width = w;
-    fb->height = h;
 
     struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, fb->image);
 

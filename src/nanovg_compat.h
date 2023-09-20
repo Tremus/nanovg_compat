@@ -62,14 +62,12 @@ void mnvgSetViewBounds(void* view, int width, int height);
 
 #define nvgCreateContext(layer, flags, w, h)                                   \
     mnvgCreateContext(layer, flags | NVG_ANTIALIAS | NVG_TRIPLE_BUFFER, w, h)
-#define nvgDeleteContext(context) nvgDeleteMTL(context)
-#define nvgBindFramebuffer(ctx, fb) mnvgBindFramebuffer(ctx, fb)
-#define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
-    mnvgCreateFramebuffer(ctx, w, h, flags)
-#define nvgDeleteFramebuffer(ctx, fb) mnvgDeleteFramebuffer(fb)
+#define nvgDeleteContext(ctx) nvgDeleteMTL(ctx)
+#define nvgBindFramebuffer(ctx, img) mnvgBindFramebuffer(ctx, img)
+#define nvgCreateFramebuffer(ctx, w, h, flags) mnvgCreateFramebuffer(ctx, w, h, flags)
+#define nvgDeleteFramebuffer(ctx, img) nvgDeleteImage(ctx, img)
 #define nvgClearWithColor(ctx, color) mnvgClearWithColor(ctx, color)
 #define nvgSetViewBounds(ctx, nsview, w, h) mnvgSetViewBounds(nsview, w, h)
-typedef MNVGframebuffer NVGframebuffer;
 
 #elif defined __linux__
 #include <nanovg_gl.h>
@@ -81,7 +79,6 @@ typedef MNVGframebuffer NVGframebuffer;
 #define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
     nvgluCreateFramebuffer(ctx, w, h, flags)
 #define nvgDeleteFramebuffer(ctx, fb) nvgluDeleteFramebuffer(fb)
-typedef NVGLUframebuffer NVGframebuffer;
 
 #endif
 

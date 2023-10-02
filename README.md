@@ -9,4 +9,4 @@ CMake will build this as a static library you should link as `nanovg_compat`.
 You will have to link additional libraries depending on your operating system.
 
 -   Windows: `d3d11` & `dxguid`
--   MacOS: `-framework Metal`
+-   MacOS: `-framework Metal -framework QuartzCore`

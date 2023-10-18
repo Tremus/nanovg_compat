@@ -50,8 +50,8 @@ void nvgCurrentScissor(NVGcontext* ctx, float* x, float* y, float* w, float* h)
     ey = state->scissor.extent[1];
     nvgTransformInverse(invxorm, state->xform);
     nvgTransformMultiply(pxform, invxorm);
-    tex = ex * nvg__absf(pxform[0]) + ey * nvg__absf(pxform[2]);
-    tey = ex * nvg__absf(pxform[1]) + ey * nvg__absf(pxform[3]);
+    tex = ex * fabsf(pxform[0]) + ey * fabsf(pxform[2]);
+    tey = ex * fabsf(pxform[1]) + ey * fabsf(pxform[3]);
 
     *x = pxform[4] - tex;
     *y = pxform[5] - tey;

@@ -39,6 +39,10 @@ void d3dnvgBindFramebuffer(NVGcontext* ctx, int image);
 // Creates a 2D texture to use as a render target
 int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h, int flags);
 
+// Copies the pixels from the specified image into the specified `data`.
+void d3dnvgReadPixels(struct NVGcontext* ctx, int image,
+					  int x, int y, int width, int height, void* data);
+
 void d3dnvgPresent(NVGcontext* ctx);
 
 #define nvgCreateContext(layer, flags, w, h)                                   \
@@ -53,6 +57,7 @@ void d3dnvgPresent(NVGcontext* ctx);
 #define nvgClearWithColor(ctx, color) d3dnvgClearWithColor(ctx, color)
 #define nvgSetViewBounds(ctx, layer, w, h)                                     \
     d3dnvgSetViewBounds(d3dnvgGetDevice(ctx), layer, (unsigned)w, (unsigned)h)
+#define nvgReadPixels d3dnvgReadPixels
 
 #elif defined __APPLE__
 #include <nanovg_mtl.h>
@@ -68,6 +73,8 @@ void mnvgSetViewBounds(void* view, int width, int height);
 #define nvgDeleteFramebuffer(ctx, img) nvgDeleteImage(ctx, img)
 #define nvgClearWithColor(ctx, color) mnvgClearWithColor(ctx, color)
 #define nvgSetViewBounds(ctx, nsview, w, h) mnvgSetViewBounds(nsview, w, h)
+
+#define nvgReadPixels mnvgReadPixels
 
 #elif defined __linux__
 #include <nanovg_gl.h>

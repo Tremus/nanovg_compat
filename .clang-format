@@ -4,21 +4,48 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 ---
 Language: Cpp
-# Force pointers to the type for C++
-DerivePointerAlignment: false
+AccessModifierOffset: -4
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveAssignments:
+    Enabled: true
+    AcrossEmptyLines: false
+    AcrossComments: false
+    AlignCompound: true
+    PadOperators: true
+AlignConsecutiveDeclarations: Consecutive
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
 PointerAlignment: Left
+BinPackArguments: false
+BinPackParameters: false
 BreakBeforeBraces: Custom
 BraceWrapping:
     AfterCaseLabel: true
-    AfterControlStatement: Always
+    AfterClass: true
+    AfterControlStatement: true
     AfterEnum: true
     AfterFunction: true
     AfterNamespace: true
     AfterObjCDeclaration: true
     AfterStruct: true
+    AfterUnion: true
+    AfterExternBlock: false
+    BeforeCatch: true
+    BeforeElse: true
+    BeforeLambdaBody: true
+    BeforeWhile: true
+    IndentBraces: false
+    SplitEmptyFunction: false
+    SplitEmptyRecord: false
 BreakConstructorInitializers: BeforeComma
-AllowShortIfStatementsOnASingleLine: Never
-IndentExternBlock: NoIndent
+BreakInheritanceList: BeforeComma
+ColumnLimit: 120
+DerivePointerAlignment: false
+IndentAccessModifiers: false
+IndentExternBlock: AfterExternBlock
+SpaceAfterLogicalNot: true
 ---
 Language: ObjC
 DerivePointerAlignment: false

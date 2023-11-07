@@ -1,16 +1,14 @@
 #ifdef _WIN32
 #define NANOVG_D3D11_IMPLEMENTATION
+#define WIN32_LEAN_AND_MEAN
+#define D3D11_NO_HELPERS
+#define NOMINMAX
 #elif defined __linux__
 #define NANOVG_GLES2_IMPLEMENTATION
 // TODO: add linux support
 #endif
 
 #include "nanovg_compat.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "nanovg.c"
 
 NanoVGDrawCallCount nvgGetDrawCallCount(NVGcontext* ctx)
@@ -20,8 +18,7 @@ NanoVGDrawCallCount nvgGetDrawCallCount(NVGcontext* ctx)
     callCount.fill   = ctx->fillTriCount;
     callCount.stroke = ctx->strokeTriCount;
     callCount.text   = ctx->textTriCount;
-    callCount.total  = ctx->drawCallCount  + ctx->fillTriCount +
-                       ctx->strokeTriCount + ctx->textTriCount;
+    callCount.total  = ctx->drawCallCount + ctx->fillTriCount + ctx->strokeTriCount + ctx->textTriCount;
     return callCount;
 }
 
@@ -34,8 +31,8 @@ NVGcolor nvgGetFillColor(NVGcontext* ctx)
 void nvgCurrentScissor(NVGcontext* ctx, float* x, float* y, float* w, float* h)
 {
     NVGstate* state = nvg__getState(ctx);
-    float pxform[6], invxorm[6];
-    float ex, ey, tex, tey;
+    float     pxform[6], invxorm[6];
+    float     ex, ey, tex, tey;
 
     // If no previous scissor has been set, set the scissor as current scissor.
     if (state->scissor.extent[0] < 0)
@@ -61,21 +58,21 @@ void nvgCurrentScissor(NVGcontext* ctx, float* x, float* y, float* w, float* h)
 
 void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth)
 {
-    NVGstate* state = nvg__getState(ctx);
-    float scale = nvg__getAverageScale(state->xform);
-    float strokeWidth = nvg__clampf(state->strokeWidth * scale, 0.0f, 200.0f);
-    NVGpaint strokePaint = state->stroke;
+    NVGstate*      state       = nvg__getState(ctx);
+    float          scale       = nvg__getAverageScale(state->xform);
+    float          strokeWidth = nvg__clampf(state->strokeWidth * scale, 0.0f, 200.0f);
+    NVGpaint       strokePaint = state->stroke;
     const NVGpath* path;
-    int i;
+    int            i;
 
     if (strokeWidth < fringeWidth)
     {
         // If the stroke width is less than pixel size, use alpha to emulate
         // coverage. Since coverage is area, scale by alpha*alpha.
-        float alpha = nvg__clampf(strokeWidth / fringeWidth, 0.0f, 1.0f);
+        float alpha              = nvg__clampf(strokeWidth / fringeWidth, 0.0f, 1.0f);
         strokePaint.innerColor.a *= alpha * alpha;
         strokePaint.outerColor.a *= alpha * alpha;
-        strokeWidth = fringeWidth;
+        strokeWidth              = fringeWidth;
     }
 
     // Apply global alpha
@@ -85,21 +82,24 @@ void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth)
     nvg__flattenPaths(ctx);
 
     if (ctx->params.edgeAntiAlias && state->shapeAntiAlias)
-        nvg__expandStroke(ctx, strokeWidth * 0.5f, fringeWidth, state->lineCap,
-                          state->lineJoin, state->miterLimit);
+        nvg__expandStroke(ctx, strokeWidth * 0.5f, fringeWidth, state->lineCap, state->lineJoin, state->miterLimit);
     else
-        nvg__expandStroke(ctx, strokeWidth * 0.5f, 0.0f, state->lineCap,
-                          state->lineJoin, state->miterLimit);
+        nvg__expandStroke(ctx, strokeWidth * 0.5f, 0.0f, state->lineCap, state->lineJoin, state->miterLimit);
 
-    ctx->params.renderStroke(ctx->params.userPtr, &strokePaint,
-                             state->compositeOperation, &state->scissor,
-                             fringeWidth, strokeWidth, ctx->cache->paths,
-                             ctx->cache->npaths);
+    ctx->params.renderStroke(
+        ctx->params.userPtr,
+        &strokePaint,
+        state->compositeOperation,
+        &state->scissor,
+        fringeWidth,
+        strokeWidth,
+        ctx->cache->paths,
+        ctx->cache->npaths);
 
     // Count triangles
     for (i = 0; i < ctx->cache->npaths; i++)
     {
-        path = &ctx->cache->paths[i];
+        path                = &ctx->cache->paths[i];
         ctx->strokeTriCount += path->nstroke - 2;
         ctx->drawCallCount++;
     }
@@ -109,27 +109,24 @@ void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth)
 
 #define WCODE_HRESULT_FIRST MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x200)
 #define WCODE_HRESULT_LAST MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF + 1, 0) - 1
-#define HRESULTToWCode(r)                                                      \
-    (r >= WCODE_HRESULT_FIRST && r <= WCODE_HRESULT_LAST)                      \
-        ? (r - WCODE_HRESULT_FIRST)                                            \
-        : 0
+#define HRESULTToWCode(r) (r >= WCODE_HRESULT_FIRST && r <= WCODE_HRESULT_LAST) ? (r - WCODE_HRESULT_FIRST) : 0
 
 struct D3DNVGdevice
 {
-    ID3D11Device* pDevice;
-    ID3D11DeviceContext* pDeviceContext;
-    IDXGISwapChain* pSwapChain;
-    DXGI_SWAP_CHAIN_DESC swapDesc;
+    ID3D11Device*           pDevice;
+    ID3D11DeviceContext*    pDeviceContext;
+    IDXGISwapChain*         pSwapChain;
+    DXGI_SWAP_CHAIN_DESC    swapDesc;
     ID3D11RenderTargetView* pMainView;
-    ID3D11Texture2D* pDepthStencil;
+    ID3D11Texture2D*        pDepthStencil;
     ID3D11DepthStencilView* pDepthStencilView;
     ID3D11RenderTargetView* pTargetView;
 };
 
 struct D3DNVGdevice* d3dnvgGetDevice(NVGcontext* ctx)
 {
-    struct D3DNVGcontext* D3D = (struct D3DNVGcontext*)ctx->params.userPtr;
-    struct D3DNVGdevice* device = (struct D3DNVGdevice*)D3D->userPtr;
+    struct D3DNVGcontext* D3D    = (struct D3DNVGcontext*)ctx->params.userPtr;
+    struct D3DNVGdevice*  device = (struct D3DNVGdevice*)D3D->userPtr;
     return device;
 }
 
@@ -156,7 +153,7 @@ static void d3dnvgDestroyDevice(struct D3DNVGdevice* device)
     D3D_API_RELEASE(device->pMainView);
     D3D_API_RELEASE(device->pDepthStencil);
     D3D_API_RELEASE(device->pDepthStencilView);
-    
+
     NVG_FREE(device);
 }
 
@@ -165,12 +162,12 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
 {
     struct D3DNVGdevice* device = NULL;
 
-    HRESULT hr = S_OK;
-    IDXGIDevice* pDXGIDevice = NULL;
-    IDXGIAdapter* pAdapter = NULL;
+    HRESULT       hr           = S_OK;
+    IDXGIDevice*  pDXGIDevice  = NULL;
+    IDXGIAdapter* pAdapter     = NULL;
     IDXGIFactory* pDXGIFactory = NULL;
-    UINT deviceFlags = 0;
-    UINT driver = 0;
+    UINT          deviceFlags  = 0;
+    UINT          driver       = 0;
 
     device = (struct D3DNVGdevice*)NVG_MALLOC(sizeof(*device));
 
@@ -197,15 +194,21 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
 
     for (driver = 0; driver < ARRAYSIZE(driverAttempts); driver++)
     {
-        hr = D3D11CreateDevice(NULL, driverAttempts[driver], NULL, deviceFlags,
-                               levelAttempts, ARRAYSIZE(levelAttempts),
-                               D3D11_SDK_VERSION, &device->pDevice, NULL,
-                               &device->pDeviceContext);
+        hr = D3D11CreateDevice(
+            NULL,
+            driverAttempts[driver],
+            NULL,
+            deviceFlags,
+            levelAttempts,
+            ARRAYSIZE(levelAttempts),
+            D3D11_SDK_VERSION,
+            &device->pDevice,
+            NULL,
+            &device->pDeviceContext);
 
         if (SUCCEEDED(hr))
         {
             char text[32];
-            ZeroMemory(&text, sizeof(text));
             sprintf(text, "Using graphics driver: %d\n", driver);
             OutputDebugString(text);
 
@@ -220,8 +223,7 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
 
     if (SUCCEEDED(hr))
     {
-        hr = D3D_API_2(device->pDevice, QueryInterface, &IID_IDXGIDevice,
-                       (void**)&pDXGIDevice);
+        hr = D3D_API_2(device->pDevice, QueryInterface, &IID_IDXGIDevice, (void**)&pDXGIDevice);
         if (FAILED(hr))
         {
             OutputDebugString("Failed ID3D11Device::QueryInterface()\n");
@@ -237,8 +239,7 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
     }
     if (SUCCEEDED(hr))
     {
-        hr = D3D_API_2(pAdapter, GetParent, &IID_IDXGIFactory,
-                       (void**)&pDXGIFactory);
+        hr = D3D_API_2(pAdapter, GetParent, &IID_IDXGIFactory, (void**)&pDXGIFactory);
         if (FAILED(hr))
         {
             OutputDebugString("Failed IDXGIAdapter::GetParent()\n");
@@ -246,21 +247,19 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
     }
     if (SUCCEEDED(hr))
     {
-        device->swapDesc.SampleDesc.Count = 1; // The Number of Multisamples per Level
-        device->swapDesc.SampleDesc.Quality =
-            0; // between 0(lowest Quality) and one lesser than
-               // pDevice->CheckMultisampleQualityLevels
+        device->swapDesc.SampleDesc.Count   = 1; // The Number of Multisamples per Level
+        device->swapDesc.SampleDesc.Quality = 0; // between 0(lowest Quality) and one lesser than
+                                                 // pDevice->CheckMultisampleQualityLevels
 
-        device->swapDesc.OutputWindow = hwnd;
-        device->swapDesc.Windowed = TRUE;
-        device->swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        device->swapDesc.BufferDesc.Width = width;
-        device->swapDesc.BufferDesc.Height = height;
-        device->swapDesc.BufferDesc.RefreshRate.Numerator = 60;
+        device->swapDesc.OutputWindow                       = hwnd;
+        device->swapDesc.Windowed                           = TRUE;
+        device->swapDesc.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        device->swapDesc.BufferDesc.Width                   = width;
+        device->swapDesc.BufferDesc.Height                  = height;
+        device->swapDesc.BufferDesc.RefreshRate.Numerator   = 60;
         device->swapDesc.BufferDesc.RefreshRate.Denominator = 1;
-        device->swapDesc.BufferDesc.ScanlineOrdering =
-            DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-        device->swapDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+        device->swapDesc.BufferDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+        device->swapDesc.BufferDesc.Scaling                 = DXGI_MODE_SCALING_UNSPECIFIED;
 
         // According to randos the internet, BGRA is a format favoured by most
         // hardware. Using RGBA will often mean that each pixel will have to be
@@ -272,21 +271,28 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
         // Recommended settings:
         // https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-flip-model
         // First we will attempt the recommended model
-        device->swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        device->swapDesc.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         device->swapDesc.BufferCount = 2;
-        hr = D3D_API_3(pDXGIFactory, CreateSwapChain, (IUnknown*)device->pDevice,
-                       &device->swapDesc, &device->pSwapChain);
+        hr                           = D3D_API_3(
+            pDXGIFactory,
+            CreateSwapChain,
+            (IUnknown*)device->pDevice,
+            &device->swapDesc,
+            &device->pSwapChain);
 
         if (FAILED(hr))
         {
-            OutputDebugString(
-                "Failed to CreateSwapChain using DXGI_SWAP_EFFECT_FLIP_DISCARD "
-                "strategy, using fallback...\n");
+            OutputDebugString("Failed to CreateSwapChain using DXGI_SWAP_EFFECT_FLIP_DISCARD "
+                              "strategy, using fallback...\n");
             // These settings should work on Windows 7...
-            device->swapDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+            device->swapDesc.SwapEffect  = DXGI_SWAP_EFFECT_DISCARD;
             device->swapDesc.BufferCount = 1;
-            hr = D3D_API_3(pDXGIFactory, CreateSwapChain, (IUnknown*)device->pDevice,
-                           &device->swapDesc, &device->pSwapChain);
+            hr                           = D3D_API_3(
+                pDXGIFactory,
+                CreateSwapChain,
+                (IUnknown*)device->pDevice,
+                &device->swapDesc,
+                &device->pSwapChain);
             if (FAILED(hr))
             {
                 OutputDebugString("Failed IDXGIFactory::CreateSwapChain()\n");
@@ -303,8 +309,7 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
         hr = d3dnvgSetViewBounds(device, hwnd, width, height);
         if (FAILED(hr))
         {
-            OutputDebugString(
-                "Failed to set view bounds - d3dnvgSetViewBounds()\n");
+            OutputDebugString("Failed to set view bounds - d3dnvgSetViewBounds()\n");
         }
     }
     if (FAILED(hr))
@@ -316,8 +321,7 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
     return device;
 }
 
-NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width,
-                                unsigned int height)
+NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width, unsigned int height)
 {
     NVGcontext* ctx = NULL;
 
@@ -329,7 +333,7 @@ NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width,
     }
     OutputDebugString("Initialized DX11\n");
 
-    ctx = nvgCreateD3D11(device->pDevice, flags);
+    ctx = nvgCreateD3D11(device->pDevice, flags | NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 
     if (ctx == NULL)
     {
@@ -339,7 +343,7 @@ NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width,
     }
 
     struct D3DNVGcontext* D3D = (struct D3DNVGcontext*)ctx->params.userPtr;
-    D3D->userPtr = device;
+    D3D->userPtr              = device;
 
     return ctx;
 }
@@ -355,16 +359,16 @@ void d3dnvgDeleteContext(NVGcontext* ctx)
 long d3dnvgSetViewBounds(struct D3DNVGdevice* device, void* hwnd, unsigned int width, unsigned int height)
 {
     D3D11_RENDER_TARGET_VIEW_DESC renderDesc;
-    ID3D11RenderTargetView* viewList[1] = {NULL};
-    HRESULT hr = S_OK;
-    ID3D11Resource* pBackBufferResource = NULL;
-    D3D11_TEXTURE2D_DESC texDesc;
+    ID3D11RenderTargetView*       viewList[1]         = {NULL};
+    HRESULT                       hr                  = S_OK;
+    ID3D11Resource*               pBackBufferResource = NULL;
+    D3D11_TEXTURE2D_DESC          texDesc;
     D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc;
 
-    device->swapDesc.BufferDesc.Width = width;
+    device->swapDesc.BufferDesc.Width  = width;
     device->swapDesc.BufferDesc.Height = height;
 
-    if (!device->pDevice || !device->pDeviceContext)
+    if (! device->pDevice || ! device->pDeviceContext)
     {
         OutputDebugString("Cannot use d3dnvgSetViewBounds(). ID3D11Device & "
                           "ID3D11DeviceContext not initialised.\n");
@@ -379,8 +383,14 @@ long d3dnvgSetViewBounds(struct D3DNVGdevice* device, void* hwnd, unsigned int w
     D3D_API_RELEASE(device->pDepthStencilView);
 
     // Resize render target buffers
-    hr = D3D_API_5(device->pSwapChain, ResizeBuffers, device->swapDesc.BufferCount, width,
-                   height, device->swapDesc.BufferDesc.Format, 0);
+    hr = D3D_API_5(
+        device->pSwapChain,
+        ResizeBuffers,
+        device->swapDesc.BufferCount,
+        width,
+        height,
+        device->swapDesc.BufferDesc.Format,
+        0);
     if (FAILED(hr))
     {
         OutputDebugString("Failed IDXGISwapChain::ResizeBuffers()\n");
@@ -388,8 +398,7 @@ long d3dnvgSetViewBounds(struct D3DNVGdevice* device, void* hwnd, unsigned int w
     }
 
     // Create the render target view and set it on the device
-    hr = D3D_API_3(device->pSwapChain, GetBuffer, 0, &IID_ID3D11Texture2D,
-                   (void**)&pBackBufferResource);
+    hr = D3D_API_3(device->pSwapChain, GetBuffer, 0, &IID_ID3D11Texture2D, (void**)&pBackBufferResource);
     if (FAILED(hr))
     {
         OutputDebugString("Failed IDXGISwapChain::GetBuffer()\n");
@@ -397,13 +406,11 @@ long d3dnvgSetViewBounds(struct D3DNVGdevice* device, void* hwnd, unsigned int w
     }
 
     renderDesc.Format = device->swapDesc.BufferDesc.Format;
-    renderDesc.ViewDimension = (device->swapDesc.SampleDesc.Count > 1)
-                                   ? D3D11_RTV_DIMENSION_TEXTURE2DMS
-                                   : D3D11_RTV_DIMENSION_TEXTURE2D;
+    renderDesc.ViewDimension =
+        (device->swapDesc.SampleDesc.Count > 1) ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;
     renderDesc.Texture2D.MipSlice = 0;
 
-    hr = D3D_API_3(device->pDevice, CreateRenderTargetView, pBackBufferResource,
-                   &renderDesc, &device->pMainView);
+    hr = D3D_API_3(device->pDevice, CreateRenderTargetView, pBackBufferResource, &renderDesc, &device->pMainView);
     D3D_API_RELEASE(pBackBufferResource);
     if (FAILED(hr))
     {
@@ -411,17 +418,17 @@ long d3dnvgSetViewBounds(struct D3DNVGdevice* device, void* hwnd, unsigned int w
         return hr;
     }
 
-    texDesc.ArraySize = 1;
-    texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    texDesc.CPUAccessFlags = 0;
-    texDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    texDesc.Height = (UINT)height;
-    texDesc.Width = (UINT)width;
-    texDesc.MipLevels = 1;
-    texDesc.MiscFlags = 0;
-    texDesc.SampleDesc.Count = device->swapDesc.SampleDesc.Count;
+    texDesc.ArraySize          = 1;
+    texDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
+    texDesc.CPUAccessFlags     = 0;
+    texDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texDesc.Height             = (UINT)height;
+    texDesc.Width              = (UINT)width;
+    texDesc.MipLevels          = 1;
+    texDesc.MiscFlags          = 0;
+    texDesc.SampleDesc.Count   = device->swapDesc.SampleDesc.Count;
     texDesc.SampleDesc.Quality = device->swapDesc.SampleDesc.Quality;
-    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.Usage              = D3D11_USAGE_DEFAULT;
 
     D3D_API_RELEASE(device->pDepthStencil);
     hr = D3D_API_3(device->pDevice, CreateTexture2D, &texDesc, NULL, &device->pDepthStencil);
@@ -432,15 +439,17 @@ long d3dnvgSetViewBounds(struct D3DNVGdevice* device, void* hwnd, unsigned int w
     }
 
     depthViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthViewDesc.ViewDimension = (device->swapDesc.SampleDesc.Count > 1)
-                                      ? D3D11_DSV_DIMENSION_TEXTURE2DMS
-                                      : D3D11_DSV_DIMENSION_TEXTURE2D;
-    depthViewDesc.Flags = 0;
+    depthViewDesc.ViewDimension =
+        (device->swapDesc.SampleDesc.Count > 1) ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;
+    depthViewDesc.Flags              = 0;
     depthViewDesc.Texture2D.MipSlice = 0;
 
-    hr = D3D_API_3(device->pDevice, CreateDepthStencilView,
-                   (ID3D11Resource*)device->pDepthStencil, &depthViewDesc,
-                   &device->pDepthStencilView);
+    hr = D3D_API_3(
+        device->pDevice,
+        CreateDepthStencilView,
+        (ID3D11Resource*)device->pDepthStencil,
+        &depthViewDesc,
+        &device->pDepthStencilView);
     if (FAILED(hr))
     {
         OutputDebugString("Failed ID3D11Device::CreateDepthStencilView()\n");
@@ -453,8 +462,7 @@ void d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color)
 {
     struct D3DNVGdevice* device = d3dnvgGetDevice(ctx);
 
-    D3D_API_2(device->pDeviceContext, ClearRenderTargetView, device->pTargetView,
-              color.rgba);
+    D3D_API_2(device->pDeviceContext, ClearRenderTargetView, device->pTargetView, color.rgba);
 }
 
 void d3dnvgBindFramebuffer(NVGcontext* ctx, int texId)
@@ -470,34 +478,31 @@ void d3dnvgBindFramebuffer(NVGcontext* ctx, int texId)
 
     if (texId == 0)
     {
-        viewport.Width = device->swapDesc.BufferDesc.Width;
-        viewport.Height = device->swapDesc.BufferDesc.Height;
+        viewport.Width      = device->swapDesc.BufferDesc.Width;
+        viewport.Height     = device->swapDesc.BufferDesc.Height;
         device->pTargetView = device->pMainView;
     }
     else
     {
-        NVGparams* params = nvgInternalParams(ctx);
-        struct D3DNVGcontext* D3D = (struct D3DNVGcontext*)params->userPtr;
-        struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, texId);
-        viewport.Width = tex->width;
-        viewport.Height = tex->height;
-        device->pTargetView = tex->renderTargetView;
+        NVGparams*            params = nvgInternalParams(ctx);
+        struct D3DNVGcontext* D3D    = (struct D3DNVGcontext*)params->userPtr;
+        struct D3DNVGtexture* tex    = D3Dnvg__findTexture(D3D, texId);
+        viewport.Width               = tex->width;
+        viewport.Height              = tex->height;
+        device->pTargetView          = tex->renderTargetView;
     }
 
-    D3D_API_3(device->pDeviceContext, OMSetRenderTargets, 1, &device->pTargetView,
-              device->pDepthStencilView);
+    D3D_API_3(device->pDeviceContext, OMSetRenderTargets, 1, &device->pTargetView, device->pDepthStencilView);
     D3D_API_2(device->pDeviceContext, RSSetViewports, 1, &viewport);
 }
 
-int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
-                                           int flags)
+int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h, int flags)
 {
-    NVGparams* params = nvgInternalParams(ctx);
-    struct D3DNVGcontext* D3D = (struct D3DNVGcontext*)params->userPtr;
-    struct D3DNVGdevice* device = (struct D3DNVGdevice*)D3D->userPtr;
+    NVGparams*            params = nvgInternalParams(ctx);
+    struct D3DNVGcontext* D3D    = (struct D3DNVGcontext*)params->userPtr;
+    struct D3DNVGdevice*  device = (struct D3DNVGdevice*)D3D->userPtr;
 
-    int texId =
-        nvgCreateImageRGBA(ctx, w, h, flags | NVG_IMAGE_RENDER_TARGET, NULL);
+    int texId = nvgCreateImageRGBA(ctx, w, h, flags | NVG_IMAGE_RENDER_TARGET, NULL);
 
     struct D3DNVGtexture* tex = D3Dnvg__findTexture(D3D, texId);
 
@@ -506,13 +511,15 @@ int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
     // nanovg images use the RGBA format, so we must use the same else the red &
     // blue channels will be flipped
     renderDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    renderDesc.ViewDimension = (device->swapDesc.SampleDesc.Count > 1)
-                                   ? D3D11_RTV_DIMENSION_TEXTURE2DMS
-                                   : D3D11_RTV_DIMENSION_TEXTURE2D;
+    renderDesc.ViewDimension =
+        (device->swapDesc.SampleDesc.Count > 1) ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;
     renderDesc.Texture2D.MipSlice = 0;
 
-    HRESULT hr = device->pDevice->lpVtbl->CreateRenderTargetView(device->pDevice,
-        (struct ID3D11Resource*)tex->tex, &renderDesc, &tex->renderTargetView);
+    HRESULT hr = device->pDevice->lpVtbl->CreateRenderTargetView(
+        device->pDevice,
+        (struct ID3D11Resource*)tex->tex,
+        &renderDesc,
+        &tex->renderTargetView);
     if (FAILED(hr))
     {
         WORD code = HRESULTToWCode(hr);
@@ -524,8 +531,71 @@ int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h,
     return texId;
 }
 
-#ifdef __cplusplus
+void d3dnvgCopyImage(NVGcontext* ctx, int imgDest, int imgSrc)
+{
+    NVGparams*            params  = nvgInternalParams(ctx);
+    struct D3DNVGcontext* D3D     = (struct D3DNVGcontext*)params->userPtr;
+    struct D3DNVGtexture* texDest = D3Dnvg__findTexture(D3D, imgDest);
+    struct D3DNVGtexture* texSrc  = D3Dnvg__findTexture(D3D, imgSrc);
+
+    D3D_API_2(D3D->pDeviceContext, CopyResource, (ID3D11Resource*)texDest->tex, (ID3D11Resource*)texSrc->tex);
 }
-#endif
+
+void d3dnvgWriteImage(NVGcontext* ctx, int image, void* data)
+{
+    NVGparams*            params = nvgInternalParams(ctx);
+    struct D3DNVGcontext* D3D    = (struct D3DNVGcontext*)params->userPtr;
+    struct D3DNVGtexture* tex    = D3Dnvg__findTexture(D3D, image);
+
+    D3D11_MAPPED_SUBRESOURCE resource;
+    int width = tex->width;
+    int height = tex->height;
+
+    // All the results on stackoverflow mention to use the UpdateResource function to write to a tex CPU -> GPU
+    // But the resulting tex looks all messed up...
+    // This strategy, Map, memcpy, Upmap seems to do the trick...
+    HRESULT hr = D3D->pDeviceContext->lpVtbl->Map(D3D->pDeviceContext, (ID3D11Resource*)tex->tex, 0, D3D11_MAP_WRITE, 0, &resource);
+
+    if (FAILED(hr))
+    {
+        WORD code = HRESULTToWCode(hr);
+        OutputDebugString("Failed mapping resource - ID3D11DeviceContext::Map()");
+        return;
+    }
+
+    size_t row_bytes = width * sizeof(unsigned);
+    for (int i = 0; i < height; i++)
+    {
+        memcpy(resource.pData + i * resource.RowPitch, data + i * row_bytes, row_bytes);
+    }
+
+    D3D_API_2(D3D->pDeviceContext, Unmap, (ID3D11Resource*)tex->tex, 0);
+}
+
+void d3dnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width, int height, void* data)
+{
+    NVGparams*            params = nvgInternalParams(ctx);
+    struct D3DNVGcontext* D3D    = (struct D3DNVGcontext*)params->userPtr;
+    struct D3DNVGtexture* tex    = D3Dnvg__findTexture(D3D, image);
+
+    D3D11_MAPPED_SUBRESOURCE resource;
+    HRESULT hr = D3D->pDeviceContext->lpVtbl->Map(D3D->pDeviceContext, (ID3D11Resource*)tex->tex, 0, D3D11_MAP_READ, 0, &resource);
+    
+    if (FAILED(hr))
+    {
+        WORD code = HRESULTToWCode(hr);
+        OutputDebugString("Failed mapping resource - ID3D11DeviceContext::Map()");
+        return;
+    }
+
+    for (int i = y; i < height; i++)
+    {
+        memcpy(data + i * width * sizeof(unsigned),
+               resource.pData + i * resource.RowPitch,
+               width * sizeof(unsigned));
+    }
+
+    D3D_API_2(D3D->pDeviceContext, Unmap, (ID3D11Resource*)tex->tex, 0);
+}
 
 #endif

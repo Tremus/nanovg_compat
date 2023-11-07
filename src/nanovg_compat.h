@@ -20,72 +20,67 @@ extern "C" {
 #define NVG_ALIGN_BR (NVG_ALIGN_BOTTOM | NVG_ALIGN_RIGHT)
 
 #ifdef _WIN32
-#define D3D11_NO_HELPERS
-#define NOMINMAX
 #include <nanovg_d3d11.h>
-
-struct D3DNVGdevice;
 
 struct D3DNVGdevice* d3dnvgGetDevice(NVGcontext*);
 
-NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width,
-                                unsigned int height);
-long d3dnvgSetViewBounds(struct D3DNVGdevice*, void* hwnd, unsigned int width, unsigned int height);
-void d3dnvgDeleteContext(NVGcontext* ctx);
-void d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color);
+NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned width, unsigned height);
+long        d3dnvgSetViewBounds(struct D3DNVGdevice*, void* hwnd, unsigned width, unsigned height);
+void        d3dnvgDeleteContext(NVGcontext* ctx);
+void        d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color);
 
 // Binds the output-merger render target
 void d3dnvgBindFramebuffer(NVGcontext* ctx, int image);
 // Creates a 2D texture to use as a render target
 int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h, int flags);
 
+void d3dnvgCopyImage(NVGcontext* ctx, int imgDest, int imgSrc);
+void d3dnvgWriteImage(NVGcontext* ctx, int imgDest, void* data);
+
 // Copies the pixels from the specified image into the specified `data`.
-void d3dnvgReadPixels(struct NVGcontext* ctx, int image,
-					  int x, int y, int width, int height, void* data);
+void d3dnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width, int height, void* data);
+
+void d3dnvgCopyImage(NVGcontext* ctx, int imgDest, int imgSrc);
+void d3dnvgWriteImage(NVGcontext* ctx, int imgDest, void* data);
 
 void d3dnvgPresent(NVGcontext* ctx);
 
-#define nvgCreateContext(layer, flags, w, h)                                   \
-    d3dnvgCreateContext(layer,                                                 \
-                        flags | NVG_ANTIALIAS | NVG_STENCIL_STROKES,           \
-                        (unsigned)w, (unsigned)h)
-#define nvgDeleteContext(context) d3dnvgDeleteContext(context)
-#define nvgBindFramebuffer(ctx, texId) d3dnvgBindFramebuffer(ctx, texId)
-#define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
-    d3dnvgCreateFramebuffer(ctx, w, h, flags)
-#define nvgDeleteFramebuffer(ctx, texId) nvgDeleteImage(ctx, texId)
-#define nvgClearWithColor(ctx, color) d3dnvgClearWithColor(ctx, color)
-#define nvgSetViewBounds(ctx, layer, w, h)                                     \
-    d3dnvgSetViewBounds(d3dnvgGetDevice(ctx), layer, (unsigned)w, (unsigned)h)
+#define nvgCreateContext d3dnvgCreateContext
+#define nvgDeleteContext d3dnvgDeleteContext
+#define nvgBindFramebuffer d3dnvgBindFramebuffer
+#define nvgCreateFramebuffer d3dnvgCreateFramebuffer
+#define nvgDeleteFramebuffer nvgDeleteImage
 #define nvgReadPixels d3dnvgReadPixels
+#define nvgClearWithColor d3dnvgClearWithColor
+#define nvgSetViewBounds(ctx, layer, w, h) d3dnvgSetViewBounds(d3dnvgGetDevice(ctx), layer, w, h)
 
 #elif defined __APPLE__
 #include <nanovg_mtl.h>
 
 NVGcontext* mnvgCreateContext(void* view, int flags, int width, int height);
-void mnvgSetViewBounds(void* view, int width, int height);
+void        mnvgSetViewBounds(void* view, int width, int height);
 
-#define nvgCreateContext(layer, flags, w, h)                                   \
-    mnvgCreateContext(layer, flags | NVG_ANTIALIAS | NVG_TRIPLE_BUFFER, w, h)
-#define nvgDeleteContext(ctx) nvgDeleteMTL(ctx)
-#define nvgBindFramebuffer(ctx, img) mnvgBindFramebuffer(ctx, img)
-#define nvgCreateFramebuffer(ctx, w, h, flags) mnvgCreateFramebuffer(ctx, w, h, flags)
-#define nvgDeleteFramebuffer(ctx, img) nvgDeleteImage(ctx, img)
-#define nvgClearWithColor(ctx, color) mnvgClearWithColor(ctx, color)
+#define nvgCreateContext(layer, flags, w, h) mnvgCreateContext(layer, flags | NVG_ANTIALIAS | NVG_TRIPLE_BUFFER, w, h)
+#define nvgDeleteContext nvgDeleteMTL
+#define nvgBindFramebuffer mnvgBindFramebuffer
+#define nvgCreateFramebuffer mnvgCreateFramebuffer
+#define nvgDeleteFramebuffer nvgDeleteImage
+#define nvgClearWithColor mnvgClearWithColor
 #define nvgSetViewBounds(ctx, nsview, w, h) mnvgSetViewBounds(nsview, w, h)
+#define nvgReadPixels nvgReadPixels
 
 #define nvgReadPixels mnvgReadPixels
 
 #elif defined __linux__
+// TODO make linux work...
 #include <nanovg_gl.h>
 #include <nanovg_gl_utils.h>
 
-#define nvgCreateContext(flags) nvgCreateGLES2(flags)
-#define nvgDeleteContext(context) nvgDeleteGLES2(context)
+#define nvgCreateContext nvgCreateGLES2
+#define nvgDeleteContext nvgDeleteGLES2
 #define nvgBindFramebuffer(ctx, fb) nvgluBindFramebuffer(fb)
-#define nvgCreateFramebuffer(ctx, w, h, flags)                                 \
-    nvgluCreateFramebuffer(ctx, w, h, flags)
-#define nvgDeleteFramebuffer(ctx, fb) nvgluDeleteFramebuffer(fb)
+#define nvgCreateFramebuffer nvgluCreateFramebuffer
+#define nvgDeleteFramebuffer nvgluDeleteFramebuffer
 
 #endif
 

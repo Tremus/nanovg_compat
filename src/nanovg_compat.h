@@ -67,8 +67,6 @@ void        mnvgSetViewBounds(void* view, int width, int height);
 #define nvgDeleteFramebuffer nvgDeleteImage
 #define nvgClearWithColor mnvgClearWithColor
 #define nvgSetViewBounds(ctx, nsview, w, h) mnvgSetViewBounds(nsview, w, h)
-#define nvgReadPixels nvgReadPixels
-
 #define nvgReadPixels mnvgReadPixels
 
 #elif defined __linux__

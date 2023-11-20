@@ -566,7 +566,7 @@ void d3dnvgWriteImage(NVGcontext* ctx, int image, void* data)
     size_t row_bytes = width * sizeof(unsigned);
     for (int i = 0; i < height; i++)
     {
-        memcpy(resource.pData + i * resource.RowPitch, data + i * row_bytes, row_bytes);
+        memcpy((char*)resource.pData + i * resource.RowPitch, (char*)data + i * row_bytes, row_bytes);
     }
 
     D3D_API_2(D3D->pDeviceContext, Unmap, (ID3D11Resource*)tex->tex, 0);
@@ -590,8 +590,9 @@ void d3dnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width, int h
 
     for (int i = y; i < height; i++)
     {
-        memcpy(data + i * width * sizeof(unsigned),
-               resource.pData + i * resource.RowPitch,
+        memcpy(
+            (char*)data + i * width * sizeof(unsigned),
+            (char*)resource.pData + i * resource.RowPitch,
                width * sizeof(unsigned));
     }
 

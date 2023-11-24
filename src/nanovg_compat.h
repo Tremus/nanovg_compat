@@ -21,6 +21,8 @@ extern "C" {
 
 #ifdef _WIN32
 #include <nanovg_d3d11.h>
+#define NVG_DEFAULT_CONTEXT_FLAGS NVG_ANTIALIAS
+#define NVG_DEFAULT_PIXEL_RATIO 1.5f
 
 struct D3DNVGdevice* d3dnvgGetDevice(NVGcontext*);
 
@@ -52,15 +54,17 @@ void d3dnvgPresent(NVGcontext* ctx);
 #define nvgDeleteFramebuffer nvgDeleteImage
 #define nvgReadPixels d3dnvgReadPixels
 #define nvgClearWithColor d3dnvgClearWithColor
-#define nvgSetViewBounds(ctx, layer, w, h) d3dnvgSetViewBounds(d3dnvgGetDevice(ctx), layer, w, h)
+#define nvgSetViewBounds(ctx, window, w, h) d3dnvgSetViewBounds(d3dnvgGetDevice(ctx), window, w, h)
 
 #elif defined __APPLE__
 #include <nanovg_mtl.h>
+#define NVG_DEFAULT_CONTEXT_FLAGS (NVG_ANTIALIAS | NVG_TRIPLE_BUFFER)
+#define NVG_DEFAULT_PIXEL_RATIO 2.0f
 
 NVGcontext* mnvgCreateContext(void* view, int flags, int width, int height);
 void        mnvgSetViewBounds(void* view, int width, int height);
 
-#define nvgCreateContext(layer, flags, w, h) mnvgCreateContext(layer, flags | NVG_ANTIALIAS | NVG_TRIPLE_BUFFER, w, h)
+#define nvgCreateContext mnvgCreateContext
 #define nvgDeleteContext nvgDeleteMTL
 #define nvgBindFramebuffer mnvgBindFramebuffer
 #define nvgCreateFramebuffer mnvgCreateFramebuffer

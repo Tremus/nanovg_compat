@@ -333,7 +333,7 @@ NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned int width, unsig
     }
     OutputDebugString("Initialized DX11\n");
 
-    ctx = nvgCreateD3D11(device->pDevice, flags | NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    ctx = nvgCreateD3D11(device->pDevice, flags);
 
     if (ctx == NULL)
     {

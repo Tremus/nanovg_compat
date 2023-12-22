@@ -107,6 +107,11 @@ void nvgCurrentScissor(NVGcontext* ctx, float* x, float* y, float* w, float* h);
 // https://github.com/memononen/nanovg/issues/460
 void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth);
 
+// Remove N commands from the path cache. MoveTo = 3, LineTo = 3, BezierTo = 7, QuadTo = 7, Close = 1
+void    nvgPopPath(NVGcontext* ctx, int N);
+int     nvgPathLen(NVGcontext* ctx);
+float** nvgGetPath(NVGcontext* ctx);
+
 #ifdef __cplusplus
 }
 #endif

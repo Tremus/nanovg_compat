@@ -105,6 +105,10 @@ void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth)
     }
 }
 
+void    nvgPopPath(NVGcontext* ctx, int N) { ctx->ncommands -= N; }
+int     nvgPathLen(NVGcontext* ctx) { return ctx->ncommands; }
+float** nvgGetPath(NVGcontext* ctx) { return &ctx->commands; }
+
 #ifdef _WIN32
 
 #define WCODE_HRESULT_FIRST MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x200)

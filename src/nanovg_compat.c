@@ -1,9 +1,5 @@
 #ifdef _WIN32
 #define NANOVG_D3D11_IMPLEMENTATION
-#define WIN32_LEAN_AND_MEAN
-#define D3D11_NO_HELPERS
-#define NOMINMAX
-#define _CRT_SECURE_NO_WARNINGS
 #elif defined __linux__
 #define NANOVG_GLES2_IMPLEMENTATION
 // TODO: add linux support
@@ -116,18 +112,6 @@ float** nvgGetPath(NVGcontext* ctx) { return &ctx->commands; }
 #define WCODE_HRESULT_LAST MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF + 1, 0) - 1
 #define HRESULTToWCode(r) (r >= WCODE_HRESULT_FIRST && r <= WCODE_HRESULT_LAST) ? (r - WCODE_HRESULT_FIRST) : 0
 
-struct D3DNVGdevice
-{
-    ID3D11Device*           pDevice;
-    ID3D11DeviceContext*    pDeviceContext;
-    IDXGISwapChain*         pSwapChain;
-    DXGI_SWAP_CHAIN_DESC    swapDesc;
-    ID3D11RenderTargetView* pMainView;
-    ID3D11Texture2D*        pDepthStencil;
-    ID3D11DepthStencilView* pDepthStencilView;
-    ID3D11RenderTargetView* pTargetView;
-};
-
 struct D3DNVGdevice* d3dnvgGetDevice(NVGcontext* ctx)
 {
     struct D3DNVGcontext* D3D    = (struct D3DNVGcontext*)ctx->params.userPtr;
@@ -189,12 +173,14 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
     };
 
     static const D3D_FEATURE_LEVEL levelAttempts[] = {
+        D3D_FEATURE_LEVEL_12_1, // Direct3D 12.1 SM 6
+        D3D_FEATURE_LEVEL_12_0, // Direct3D 12.0 SM 5.1
+        D3D_FEATURE_LEVEL_11_1, // Direct3D 11.1 SM 5
         D3D_FEATURE_LEVEL_11_0, // Direct3D 11.0 SM 5
         D3D_FEATURE_LEVEL_10_1, // Direct3D 10.1 SM 4
         D3D_FEATURE_LEVEL_10_0, // Direct3D 10.0 SM 4
         D3D_FEATURE_LEVEL_9_3,  // Direct3D 9.3  SM 3
         D3D_FEATURE_LEVEL_9_2,  // Direct3D 9.2  SM 2
-        D3D_FEATURE_LEVEL_9_1,  // Direct3D 9.1  SM 2
     };
 
     for (driver = 0; driver < ARRAYSIZE(driverAttempts); driver++)
@@ -275,6 +261,12 @@ static struct D3DNVGdevice* d3dnvgCreateDevice(HWND hwnd, unsigned width, unsign
         // but the feature is only available starting from Windows 8.
         // Recommended settings:
         // https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-flip-model
+
+        // NOTE: VLC use different settings here, and may be worth copying
+        // They also use some a cool library loading trick to detech the Windows plaform
+        // However, the simplest thing to do is run into a brick wall with these settings
+        // https://github.com/videolan/vlc/blob/232fb13b0d6110c4d1b683cde24cf9a7f2c5c2ea/modules/video_output/win32/d3d11_swapchain.c#L263
+
         // First we will attempt the recommended model
         device->swapDesc.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         device->swapDesc.BufferCount = 2;
@@ -553,13 +545,14 @@ void d3dnvgWriteImage(NVGcontext* ctx, int image, void* data)
     struct D3DNVGtexture* tex    = D3Dnvg__findTexture(D3D, image);
 
     D3D11_MAPPED_SUBRESOURCE resource;
-    int width = tex->width;
-    int height = tex->height;
+    int                      width  = tex->width;
+    int                      height = tex->height;
 
     // All the results on stackoverflow mention to use the UpdateResource function to write to a tex CPU -> GPU
     // But the resulting tex looks all messed up...
     // This strategy, Map, memcpy, Upmap seems to do the trick...
-    HRESULT hr = D3D->pDeviceContext->lpVtbl->Map(D3D->pDeviceContext, (ID3D11Resource*)tex->tex, 0, D3D11_MAP_WRITE, 0, &resource);
+    HRESULT hr = D3D->pDeviceContext->lpVtbl
+                     ->Map(D3D->pDeviceContext, (ID3D11Resource*)tex->tex, 0, D3D11_MAP_WRITE, 0, &resource);
 
     if (FAILED(hr))
     {
@@ -584,8 +577,9 @@ void d3dnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width, int h
     struct D3DNVGtexture* tex    = D3Dnvg__findTexture(D3D, image);
 
     D3D11_MAPPED_SUBRESOURCE resource;
-    HRESULT hr = D3D->pDeviceContext->lpVtbl->Map(D3D->pDeviceContext, (ID3D11Resource*)tex->tex, 0, D3D11_MAP_READ, 0, &resource);
-    
+    HRESULT                  hr = D3D->pDeviceContext->lpVtbl
+                     ->Map(D3D->pDeviceContext, (ID3D11Resource*)tex->tex, 0, D3D11_MAP_READ, 0, &resource);
+
     if (FAILED(hr))
     {
         WORD code = HRESULTToWCode(hr);
@@ -598,7 +592,7 @@ void d3dnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width, int h
         memcpy(
             (char*)data + i * width * sizeof(unsigned),
             (char*)resource.pData + i * resource.RowPitch,
-               width * sizeof(unsigned));
+            width * sizeof(unsigned));
     }
 
     D3D_API_2(D3D->pDeviceContext, Unmap, (ID3D11Resource*)tex->tex, 0);

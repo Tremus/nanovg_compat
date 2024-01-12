@@ -20,14 +20,34 @@ extern "C" {
 #define NVG_ALIGN_BR (NVG_ALIGN_BOTTOM | NVG_ALIGN_RIGHT)
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define D3D11_NO_HELPERS
+#define NOMINMAX
+#define _CRT_SECURE_NO_WARNINGS
+#include <d3d11.h>
 #include <nanovg_d3d11.h>
+
 #define NVG_DEFAULT_CONTEXT_FLAGS NVG_ANTIALIAS
 #define NVG_DEFAULT_PIXEL_RATIO 1.5f
 
-struct D3DNVGdevice* d3dnvgGetDevice(NVGcontext*);
+typedef struct D3DNVGdevice
+{
+    ID3D11Device*        pDevice;
+    ID3D11DeviceContext* pDeviceContext;
+    IDXGISwapChain*      pSwapChain;
+    DXGI_SWAP_CHAIN_DESC swapDesc;
+    // Main framebuffer target, stored for reference
+    ID3D11RenderTargetView* pMainView;
+    ID3D11Texture2D*        pDepthStencil;
+    ID3D11DepthStencilView* pDepthStencilView;
+    // Currently bound framebuffer target
+    ID3D11RenderTargetView* pTargetView;
+} D3DNVGdevice;
+
+D3DNVGdevice* d3dnvgGetDevice(NVGcontext*);
 
 NVGcontext* d3dnvgCreateContext(void* hwnd, int flags, unsigned width, unsigned height);
-long        d3dnvgSetViewBounds(struct D3DNVGdevice*, void* hwnd, unsigned width, unsigned height);
+long        d3dnvgSetViewBounds(D3DNVGdevice*, void* hwnd, unsigned width, unsigned height);
 void        d3dnvgDeleteContext(NVGcontext* ctx);
 void        d3dnvgClearWithColor(NVGcontext* ctx, NVGcolor color);
 

@@ -3,6 +3,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define D3D11_NO_HELPERS
 #define NOMINMAX
+#define _CRT_SECURE_NO_WARNINGS
 #elif defined __linux__
 #define NANOVG_GLES2_IMPLEMENTATION
 // TODO: add linux support

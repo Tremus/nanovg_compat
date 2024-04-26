@@ -66,10 +66,10 @@ void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth)
     {
         // If the stroke width is less than pixel size, use alpha to emulate
         // coverage. Since coverage is area, scale by alpha*alpha.
-        float alpha              = nvg__clampf(strokeWidth / fringeWidth, 0.0f, 1.0f);
+        float alpha               = nvg__clampf(strokeWidth / fringeWidth, 0.0f, 1.0f);
         strokePaint.innerColor.a *= alpha * alpha;
         strokePaint.outerColor.a *= alpha * alpha;
-        strokeWidth              = fringeWidth;
+        strokeWidth               = fringeWidth;
     }
 
     // Apply global alpha
@@ -96,7 +96,7 @@ void nvgStrokeBlur(NVGcontext* ctx, float fringeWidth)
     // Count triangles
     for (i = 0; i < ctx->cache->npaths; i++)
     {
-        path                = &ctx->cache->paths[i];
+        path                 = &ctx->cache->paths[i];
         ctx->strokeTriCount += path->nstroke - 2;
         ctx->drawCallCount++;
     }
@@ -519,7 +519,7 @@ int d3dnvgCreateFramebuffer(NVGcontext* ctx, int w, int h, int flags)
         &tex->renderTargetView);
     if (FAILED(hr))
     {
-        WORD code = HRESULTToWCode(hr);
+        // WORD code = HRESULTToWCode(hr);
         OutputDebugString("Failed creating frame buffer "
                           "ID3D11Device::CreateRenderTargetView()");
         return 0;
@@ -556,7 +556,7 @@ void d3dnvgWriteImage(NVGcontext* ctx, int image, void* data)
 
     if (FAILED(hr))
     {
-        WORD code = HRESULTToWCode(hr);
+        // WORD code = HRESULTToWCode(hr);
         OutputDebugString("Failed mapping resource - ID3D11DeviceContext::Map()");
         return;
     }
@@ -582,7 +582,7 @@ void d3dnvgReadPixels(NVGcontext* ctx, int image, int x, int y, int width, int h
 
     if (FAILED(hr))
     {
-        WORD code = HRESULTToWCode(hr);
+        // WORD code = HRESULTToWCode(hr);
         OutputDebugString("Failed mapping resource - ID3D11DeviceContext::Map()");
         return;
     }

@@ -20,10 +20,18 @@ extern "C" {
 #define NVG_ALIGN_BR (NVG_ALIGN_BOTTOM | NVG_ALIGN_RIGHT)
 
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef D3D11_NO_HELPERS
 #define D3D11_NO_HELPERS
+#endif
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 #include <d3d11.h>
 #include <nanovg_d3d11.h>
 

@@ -19,6 +19,15 @@ extern "C" {
 #define NVG_ALIGN_BC (NVG_ALIGN_BOTTOM | NVG_ALIGN_CENTER)
 #define NVG_ALIGN_BR (NVG_ALIGN_BOTTOM | NVG_ALIGN_RIGHT)
 
+// clang-format off
+// eg. solid_red   = nvgHexColour(0xff0000ff)
+//     solid_black = nvgHexColour(0x000000ff)
+#define nvgHexColour(hex) (NVGcolor){( hex >> 24)         / 255.0f,\
+                                     ((hex >> 16) & 0xff) / 255.0f,\
+                                     ((hex >>  8) & 0xff) / 255.0f,\
+                                     ( hex        & 0xff) / 255.0f}
+// clang-format on
+
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
